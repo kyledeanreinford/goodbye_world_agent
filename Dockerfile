@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-RUN pip install fastapi uvicorn httpx python-multipart
+RUN pip install flask uvicorn httpx python-multipart
 
 WORKDIR /app
 COPY . /app
