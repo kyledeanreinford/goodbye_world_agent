@@ -1,5 +1,16 @@
 @envFile = .env
 
+### Whisper API
+POST http://localhost:9000/asr
+Content-Type: multipart/form-data; boundary=BOUNDARY
+
+--BOUNDARY
+Content-Disposition: form-data; name="audio_file"; filename="task.wav"
+Content-Type: audio/wav
+
+< ./task.wav
+--BOUNDARY--
+
 ### Chat with Ollama
 POST http://localhost:11434/api/chat
 Content-Type: application/json

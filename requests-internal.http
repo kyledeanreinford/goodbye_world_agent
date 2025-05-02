@@ -1,0 +1,10 @@
+### Transcribe
+POST http://localhost:8000/transcribe
+Content-Type: multipart/form-data; boundary=BOUNDARY
+
+--BOUNDARY
+Content-Disposition: form-data; name="file"; filename="task.wav"
+Content-Type: audio/wav
+
+< ./task.wav
+--BOUNDARY--
