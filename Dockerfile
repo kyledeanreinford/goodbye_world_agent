@@ -1,10 +1,10 @@
 FROM python:3.11-slim
 
-RUN pip install flask uvicorn httpx python-multipart gunicorn
-
 WORKDIR /app
-COPY . /app
 
-EXPOSE 8000
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
-CMD ["gunicorn", "-k", "uvicorn.workers.UvicornWorker", "-w", "4", "-b", "0.0.0.0:8000", "api:app"]
+COPY app.py .
+
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "app:app"]

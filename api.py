@@ -1,5 +1,4 @@
 import os
-
 import httpx
 from flask import Flask, request, jsonify
 
@@ -13,13 +12,16 @@ app = Flask(__name__)
 
 
 @app.route("/transcribe", methods=["POST"])
-async def transcribe():
+def transcribe():
     if "file" not in request.files:
         return jsonify({"error": "No file part"}), 400
+
     file = request.files["file"]
     data = file.read()
-    async with httpx.AsyncClient() as client:
-        response = await client.post(
+
+    # Using httpx in synchronous mode
+    with httpx.Client() as client:
+        response = client.post(
             WHISPER_URL,
             files={"audio_file": (file.filename, data, file.content_type)}
         )
