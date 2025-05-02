@@ -1,0 +1,39 @@
+@envFile = .env
+
+### Chat with Ollama
+POST http://localhost:11434/api/chat
+Content-Type: application/json
+
+{
+  "model": "qwen3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Given the input, respond ONLY with a tool call in the form. Only add a label if I specify. Due date is optional: \n<tool_call> {\"name\": \"create_task\", \"arguments\": {\"title\": \"Buy milk\", \"label\": \"next\", \"\"due_date\": \"2025-05-01T12:00:00Z\"}} </tool_call>\n  }\n} /no_think"
+    },
+    {
+      "role": "user",
+      "content": "Add a task to take out the compost with label home tasks"
+    }
+  ],
+  "stream": false
+}
+
+### Chat with gpt-4.1-nano
+POST https://api.openai.com/v1/responses
+Authorization: Bearer {{OPENAI_TOKEN}}
+Content-Type: application/json
+
+{
+  "model": "gpt-4.1-nano",
+  "input": [
+    {
+      "role": "system",
+      "content": "Given the input, respond ONLY with a tool call in the form. Only add a label if I specify. Due date is optional: \n<tool_call> {\"name\": \"create_task\", \"arguments\": {\"title\": \"Buy milk\", \"label\": \"next\", \"\"due_date\": \"2025-05-01T12:00:00Z\"}} </tool_call>\n  }\n} /no_think"
+    },
+    {
+      "role": "user",
+      "content": "Add a task to take out the compost with label home tasks"
+    }
+  ]
+}
