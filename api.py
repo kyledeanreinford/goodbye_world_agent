@@ -21,7 +21,7 @@ def transcribe():
     file = request.files["file"]
     data = file.read()
 
-    timeout = Timeout(connect=10.0, read=60.0)
+    timeout = Timeout(60.0, connect=10.0)
     with httpx.Client(timeout=timeout) as client:
         response = client.post(
             WHISPER_URL,
