@@ -2,6 +2,7 @@ import os
 import httpx
 import json
 from flask import Flask, request, jsonify
+from httpx import Timeout
 
 WHISPER_URL = os.getenv("WHISPER_URL")
 OLLAMA_URL = os.getenv("OLLAMA_URL")
@@ -20,7 +21,8 @@ def transcribe():
     file = request.files["file"]
     data = file.read()
 
-    with httpx.Client() as client:
+    timeout = Timeout(connect=10.0, read=60.0)
+    with httpx.Client(timeout=timeout) as client:
         response = client.post(
             WHISPER_URL,
             files={"audio_file": (file.filename, data, file.content_type)}
