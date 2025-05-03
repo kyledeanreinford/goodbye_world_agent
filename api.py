@@ -49,7 +49,8 @@ def text_root():
     }
 
     # 2. Send to Ollama
-    with httpx.Client() as client:
+    timeout = Timeout(60.0, connect=10.0)
+    with httpx.Client(timeout=timeout) as client:
         ollama_resp = client.post(OLLAMA_URL, json=ollama_payload)
 
     # 3. Parse Ollama response
