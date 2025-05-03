@@ -1,5 +1,5 @@
 ### Transcribe
-POST http://localhost:8000/transcribe
+POST http://localhost:8000/
 Content-Type: multipart/form-data; boundary=BOUNDARY
 
 --BOUNDARY
