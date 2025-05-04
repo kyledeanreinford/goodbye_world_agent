@@ -6,8 +6,8 @@ import httpx
 from flask import Flask, request, jsonify
 from httpx import Timeout
 
-from tools import TOOLS
-from vikunja import create_vikunja_task
+from goodbye_world.tools import TOOLS
+from goodbye_world.vikunja import create_vikunja_task
 
 # --- Logging configuration and logger setup ---
 logging.basicConfig(
