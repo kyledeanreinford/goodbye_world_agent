@@ -55,7 +55,7 @@ def text_input_handler():
 
     # 2. Send to Ollama
     logger.debug("Sending to Ollama with payload: %s", ollama_payload)
-    timeout = Timeout(60.0, connect=10.0)
+    timeout = Timeout(None)
     with httpx.Client(timeout=timeout) as client:
         ollama_resp = client.post(OLLAMA_URL, json=ollama_payload)
         # 3. Return raw Ollama response directly
@@ -75,7 +75,7 @@ def transcribe():
     data = file.read()
     logger.info("transcribe called for file: %s (%d bytes)", file.filename, len(data))
 
-    timeout = Timeout(60.0, connect=10.0)
+    timeout = Timeout(None)
     with httpx.Client(timeout=timeout) as client:
         logger.debug("Sending audio to Whisper API: %s bytes", len(data))
         # 1. Send to Whisper
