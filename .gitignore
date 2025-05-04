@@ -1,4 +1,7 @@
 .venv
 .env
 *.private.env.json
-port-forwarding.cmdline
+*.cmdline
+.idea
+*.wav
+__pycache__/
