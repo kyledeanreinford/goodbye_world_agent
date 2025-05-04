@@ -1,11 +1,13 @@
 import logging
 import os
-
+import re
+import json
 import httpx
 from flask import Flask, request, jsonify
 from httpx import Timeout
 
 from tools import TOOLS
+from vikunja import create_vikunja_task
 
 # --- Logging configuration and logger setup ---
 logging.basicConfig(
@@ -21,17 +23,16 @@ OLLAMA_MODEL = os.getenv("OLLAMA_MODEL","qwen3")
 
 app = Flask(__name__)
 
-
 # --- Fixed system prompt including tool descriptions ---
 SYSTEM_PROMPT = (
-    "You are an assistant that picks exactly one tool to call from the list. Respond ONLY with a tool call wrapped in <tool_call> JSON, and no other text.\n\nExample:\n<tool_call> {\"name\": \"add_anylist_item\", \"arguments\": {\"list_name\": \"Grocery\", \"item_name\": \"Milk\", \"quantity\": 1}} </tool_call>\n /no_think"
+    "You are an assistant that picks exactly one tool to call from the list. If the user asks to add an item, use add_anylist_item. If the user is asking to add a task, use add_vikunja_task. Respond ONLY with a tool call wrapped in <tool_call> JSON, and no other text.\n\nExample:\n<tool_call> {\"name\": \"add_anylist_item\", \"arguments\": {\"list_name\": \"Grocery\", \"item_name\": \"Milk\", \"quantity\": 1}} </tool_call>\n /no_think"
 )
 
 
 def call_ollama(user_content: str) -> dict:
     """
     Sends a user prompt plus a fixed system prompt and tool definitions to Ollama,
-    returning its JSON response.
+    returns its JSON response, and if a tool call is present, executes it.
     """
     payload = {
         "model": OLLAMA_MODEL,
@@ -47,7 +48,54 @@ def call_ollama(user_content: str) -> dict:
     with httpx.Client(timeout=Timeout(None)) as client:
         resp = client.post(OLLAMA_URL, json=payload)
         resp.raise_for_status()
-        return resp.json()
+        resp_json = resp.json()
+
+    # 2. Extract assistant content
+    content = ""
+    if isinstance(resp_json.get("message"), dict):
+        content = resp_json["message"]["content"]
+    elif "choices" in resp_json and resp_json["choices"]:
+        content = resp_json["choices"][0]["message"]["content"]
+
+    # 3. Parse for <tool_call>
+    m = re.search(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", content, re.DOTALL)
+    if m:
+        logger.info("Tool call: %s", m.group(1))
+        try:
+            tool_call = json.loads(m.group(1))
+        except json.JSONDecodeError:
+            resp_json["tool_error"] = "Invalid JSON in tool_call"
+            return resp_json
+
+        name = tool_call.get("name")
+        args = tool_call.get("arguments", {})
+        tool_result = None
+
+        if name == "add_anylist_item":
+            logger.info("Using add_anylist_item tool")
+            try:
+                r = httpx.post("http://localhost:3000/items", json=args)
+                tool_result = (r.json() if r.headers.get("content-type", "").startswith("application/json") else r.text)
+            except Exception as e:
+                tool_result = {"error": str(e)}
+
+        elif name == "add_vikunja_task":
+            logger.info("Using add_vikunja_task tool via create_vikunja_task()")
+            try:
+                tool_result = create_vikunja_task(args)
+            except Exception as e:
+                logger.error("Error in Vikunja helper: %s", e)
+                tool_result = {"error": str(e)}
+
+        else:
+            logger.error("Unknown tool requested: %s", name)
+            tool_result = {"error": f"Unknown tool: {name}"}
+
+        # 4. Attach results
+        resp_json["tool_call"] = tool_call
+        resp_json["tool_response"] = tool_result
+
+    return resp_json
 
 
 @app.route("/", methods=["POST"])
