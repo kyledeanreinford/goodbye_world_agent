@@ -21,7 +21,7 @@ OLLAMA_MODEL  = os.getenv("OLLAMA_MODEL","qwen3")
 app = Flask(__name__)
 
 @app.route("/", methods=["POST"])
-def text_root():
+def text_input_handler():
     """
     Text‑input endpoint.
     Expects JSON: { "prompt": "Your prompt here" }
@@ -31,7 +31,7 @@ def text_root():
 
     body = request.get_json()
     prompt = body.get("prompt", "").strip()
-    logger.info("text_root called with prompt: %s", prompt)
+    logger.info("text_input_handler called with prompt: %s", prompt)
     if not prompt:
         return jsonify({"error": "No 'prompt' field provided"}), 400
 
@@ -42,12 +42,7 @@ def text_root():
             {
                 "role": "system",
                 "content": (
-                    "Given the input, respond ONLY with a tool call in the form. "
-                    "Only add a label if I specify. Due date is optional:\n"
-                    "<tool_call> {\"name\": \"create_task\", \"arguments\": "
-                    "{\"title\": \"Buy milk\", \"label\": \"next\", "
-                    "\"due_date\": \"2025-05-01T12:00:00Z\"}} "
-                    "</tool_call>\n/no_think"
+                    "You are a helpful assistant that parses my prompts to help with a variety of tasks\n/no_think"
                 )
             },
             {
@@ -63,38 +58,8 @@ def text_root():
     timeout = Timeout(60.0, connect=10.0)
     with httpx.Client(timeout=timeout) as client:
         ollama_resp = client.post(OLLAMA_URL, json=ollama_payload)
-
-    # 3. Parse Ollama response
-    try:
-        data = ollama_resp.json()
-        if "choices" in data:
-            content = data["choices"][0]["message"]["content"]
-        elif "message" in data and "content" in data["message"]:
-            content = data["message"]["content"]
-        else:
-            raise ValueError("Unexpected Ollama response structure")
-
-        # Extract JSON from <tool_call>...</tool_call>
-        m = re.search(r"<tool_call>\s*(\{.*?\})\s*</tool_call>", content, re.DOTALL)
-        if not m:
-            raise ValueError("Missing <tool_call> wrapper in Ollama response")
-        task = json.loads(m.group(1))
-    except Exception as e:
-        logger.error(
-            "Error parsing Ollama response in text_root: %s; raw response: %s",
-            e,
-            ollama_resp.text
-        )
-        return jsonify({
-            "error":        "Invalid JSON from Ollama",
-            "details":      str(e),
-            "raw_response": ollama_resp.text
-        }), 500
-
-    return jsonify({
-        "prompt": prompt,
-        "task":   task
-    })
+        # 3. Return raw Ollama response directly
+        return jsonify(ollama_resp.json()), 200
 
 
 @app.route("/transcribe", methods=["POST"])
