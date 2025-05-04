@@ -140,6 +140,7 @@ def audio_endpoint():
             WHISPER_URL,
             files={"audio_file": (file.filename, data, file.content_type)}
         )
+    logger.debug("Whisper response: %s", whisper_resp)
     if whisper_resp.status_code != 200:
         return jsonify({
             "error":       "Whisper API failed",
