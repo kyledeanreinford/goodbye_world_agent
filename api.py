@@ -43,9 +43,7 @@ def text_input_handler():
         "messages": [
             {
                 "role": "system",
-                "content": system_prompt or (
-                    "You are a helpful assistant that parses my prompts to help with a variety of tasks\n/no_think"
-                )
+                "content": system_prompt
             },
             {
                 "role": "user",
