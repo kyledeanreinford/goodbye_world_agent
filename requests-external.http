@@ -11,7 +11,7 @@ Content-Type: audio/wav
 < ./task.wav
 --BOUNDARY--
 
-### Chat with Ollama
+### Chat with Ollama (Vikunja)
 POST http://localhost:11434/api/chat
 Content-Type: application/json
 
@@ -27,6 +27,80 @@ Content-Type: application/json
       "content": "Add a task to take out the compost with label home tasks"
     }
   ],
+  "stream": false
+}
+
+### Chat with Ollama (Anylist)
+POST http://localhost:11434/api/chat
+Content-Type: application/json
+
+{
+  "model": "qwen3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Given the input, respond ONLY with a tool call in the form below. Quantity and unit are optional. Wrap your JSON exactly in `<tool_call>…</tool_call>` with no other text.\n\nExample:\n<tool_call> {\"name\": \"add_anylist_item\", \"arguments\": {\"list_name\": \"Trader Joe's\", \"item_name\": \"Almond Milk\", \"quantity\": 1, \"unit\": \"carton\"}} </tool_call>\n\n/no_think"
+    },
+    {
+      "role": "user",
+      "content": "Add ice cream to my Trader Joe's list"
+    }
+  ],
+  "stream": false
+}
+
+### Ollama tool call
+POST http://localhost:11434/api/chat
+Content-Type: application/json
+
+{
+  "model": "qwen3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Given the input, respond ONLY with a tool call in the form below. Wrap your JSON exactly in `<tool_call>…</tool_call>` with no other text.\n\nExample:\n<tool_call> {\"name\": \"add_anylist_item\", \"arguments\": {\"list_name\": \"Trader Joe's\", \"item_name\": \"Almond Milk\", \"quantity\": 1, \"unit\": \"carton\"}} </tool_call>\n\n/no_think"
+    },
+    {
+      "role": "user",
+      "content": "Add create a task in Vikunja to take out the compost next week."
+    }
+  ],
+  "functions": [
+    {
+      "name": "add_anylist_item",
+      "description": "Add an item to an AnyList grocery list. Supported lists: Whole Foods, Grocery, Kroger, Publix, Trader Joe's, Target, Costco.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "list_name": {
+            "type": "string",
+            "enum": ["Whole Foods", "Grocery", "Kroger", "Publix", "Trader Joe's", "Target", "Costco"]
+          },
+          "item_name": {"type": "string"},
+          "quantity":  {"type": "integer"},
+          "unit":      {"type": "string"}
+        },
+        "required": ["list_name", "item_name"]
+      }
+    },
+    {
+      "name": "add_vikunja_task",
+      "description": "Add a task to Vikunja with project_id, title, description, labels, due_date, and priority.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "project_id":  {"type": "integer"},
+          "title":       {"type": "string"},
+          "description": {"type": "string"},
+          "labels":      {"type": "array",  "items": {"type": "string"}},
+          "due_date":    {"type": "string", "format": "date-time"},
+          "priority":    {"type": "integer"}
+        },
+        "required": ["project_id", "title"]
+      }
+    }
+  ],
+  "function_call": "auto",
   "stream": false
 }
 
@@ -49,3 +123,58 @@ Content-Type: application/json
   ]
 }
 
+### Ollama chat
+POST /api/chat HTTP/1.1
+Host: localhost:11434
+Content-Type: application/json
+
+{
+  "model": "qwen3",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are an assistant that picks exactly one tool to call from the list. Respond ONLY with a tool call wrapped in <tool_call> JSON, and no other text.\n\nExample:\n<tool_call> {\"name\": \"add_anylist_item\", \"arguments\": {\"list_name\": \"Grocery\", \"item_name\": \"Milk\", \"quantity\": 1}} </tool_call>\n /no_think"
+    },
+    {
+      "role": "user",
+      "content": "add ice cream to my grocery list"
+    }
+  ],
+  "functions": [
+    {
+      "name": "add_vikunja_task",
+      "description": "Add a task to Vikunja with project_id, title, description, labels, due_date, and priority.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "project_id":  { "type": "integer" },
+          "title":       { "type": "string" },
+          "description": { "type": "string" },
+          "labels":      { "type": "array", "items": { "type": "string" } },
+          "due_date":    { "type": "string", "format": "date-time" },
+          "priority":    { "type": "integer" }
+        },
+        "required": ["project_id", "title"]
+      }
+    },
+    {
+      "name": "add_anylist_item",
+      "description": "Add an item to an AnyList grocery list. Supported lists: Whole Foods, Grocery, Kroger, Publix, Trader Joe's, Target, Costco.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "list_name": {
+            "type": "string",
+            "enum": ["Whole Foods", "Grocery", "Kroger", "Publix", "Trader Joe's", "Target", "Costco"]
+          },
+          "item_name": { "type": "string" },
+          "quantity":  { "type": "integer" },
+          "unit":      { "type": "string" }
+        },
+        "required": ["list_name", "item_name"]
+      }
+    }
+  ],
+  "function_call": "auto",
+  "stream": false
+}

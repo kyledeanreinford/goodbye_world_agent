@@ -1,5 +1,5 @@
 ### Transcribe
-POST http://localhost:8000/
+POST http://localhost:8000/audio
 Content-Type: multipart/form-data; boundary=BOUNDARY
 
 --BOUNDARY
@@ -8,3 +8,11 @@ Content-Type: audio/wav
 
 < ./task.wav
 --BOUNDARY--
+
+### Text
+POST http://localhost:8000/
+Content-Type: application/json
+
+{
+  "prompt": "Add ice cream to my Grocery list"
+}
