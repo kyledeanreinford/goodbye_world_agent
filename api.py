@@ -30,6 +30,8 @@ def text_input_handler():
         return jsonify({"error": "Expected JSON body"}), 400
 
     body = request.get_json()
+    system_prompt = body.get("system_prompt", "").strip()
+    logger.info("text_input_handler received system_prompt: %s", system_prompt)
     prompt = body.get("prompt", "").strip()
     logger.info("text_input_handler called with prompt: %s", prompt)
     if not prompt:
@@ -41,7 +43,7 @@ def text_input_handler():
         "messages": [
             {
                 "role": "system",
-                "content": (
+                "content": system_prompt or (
                     "You are a helpful assistant that parses my prompts to help with a variety of tasks\n/no_think"
                 )
             },
