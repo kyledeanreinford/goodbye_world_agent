@@ -5,6 +5,15 @@ import httpx
 from flask import Flask, request, jsonify
 from httpx import Timeout
 
+# --- Logging configuration and logger setup ---
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s [%(name)s] %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 WHISPER_URL   = os.getenv("WHISPER_URL", "http://localhost:9000/asr")
 OLLAMA_URL    = os.getenv("OLLAMA_URL",  "http://localhost:11434/api/chat")
 OLLAMA_MODEL  = os.getenv("OLLAMA_MODEL","qwen3")
@@ -22,6 +31,7 @@ def text_root():
 
     body = request.get_json()
     prompt = body.get("prompt", "").strip()
+    logger.info("text_root called with prompt: %s", prompt)
     if not prompt:
         return jsonify({"error": "No 'prompt' field provided"}), 400
 
@@ -49,6 +59,7 @@ def text_root():
     }
 
     # 2. Send to Ollama
+    logger.debug("Sending to Ollama with payload: %s", ollama_payload)
     timeout = Timeout(60.0, connect=10.0)
     with httpx.Client(timeout=timeout) as client:
         ollama_resp = client.post(OLLAMA_URL, json=ollama_payload)
@@ -69,6 +80,11 @@ def text_root():
             raise ValueError("Missing <tool_call> wrapper in Ollama response")
         task = json.loads(m.group(1))
     except Exception as e:
+        logger.error(
+            "Error parsing Ollama response in text_root: %s; raw response: %s",
+            e,
+            ollama_resp.text
+        )
         return jsonify({
             "error":        "Invalid JSON from Ollama",
             "details":      str(e),
@@ -92,9 +108,11 @@ def transcribe():
 
     file = request.files["file"]
     data = file.read()
+    logger.info("transcribe called for file: %s (%d bytes)", file.filename, len(data))
 
     timeout = Timeout(60.0, connect=10.0)
     with httpx.Client(timeout=timeout) as client:
+        logger.debug("Sending audio to Whisper API: %s bytes", len(data))
         # 1. Send to Whisper
         resp = client.post(
             WHISPER_URL,
@@ -136,6 +154,7 @@ def transcribe():
     }
 
     # 3. Send to Ollama
+    logger.debug("Sending transcript to Ollama: %s", transcript)
     with httpx.Client() as client:
         ollama_resp = client.post(OLLAMA_URL, json=ollama_payload)
 
@@ -154,6 +173,11 @@ def transcribe():
             raise ValueError("Missing <tool_call> wrapper in Ollama response")
         task = json.loads(m.group(1))
     except Exception as e:
+        logger.error(
+            "Error parsing Ollama response in transcribe: %s; raw response: %s",
+            e,
+            ollama_resp.text
+        )
         return jsonify({
             "error":        "Invalid JSON from Ollama",
             "details":      str(e),
