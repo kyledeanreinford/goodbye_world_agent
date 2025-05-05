@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 # Environment URLs and model
 WHISPER_URL  = os.getenv("WHISPER_URL", "http://localhost:9000/asr")
+ANYLIST_URL  = os.getenv("ANYLIST_URL", "http://localhost:3000")
 OLLAMA_URL   = os.getenv("OLLAMA_URL",  "http://localhost:11434/api/chat")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL","qwen3")
 
@@ -74,7 +75,7 @@ def call_ollama(user_content: str) -> dict:
         if name == "add_anylist_item":
             logger.info("Using add_anylist_item tool")
             try:
-                r = httpx.post("http://localhost:3000/items", json=args)
+                r = httpx.post(f"{ANYLIST_URL}/items", json=args)
                 tool_result = (r.json() if r.headers.get("content-type", "").startswith("application/json") else r.text)
             except Exception as e:
                 tool_result = {"error": str(e)}
