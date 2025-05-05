@@ -24,15 +24,15 @@ TOOLS = [
         "parameters": {
             "type": "object",
             "properties": {
-                "list_name": {
+                "listName": {
                     "type": "string",
                     "enum": ["Whole Foods", "Grocery", "Kroger", "Publix", "Trader Joe's", "Target", "Costco"]
                 },
-                "item_name": {"type": "string"},
+                "itemName": {"type": "string"},
                 "quantity":  {"type": "integer"},
                 "unit":      {"type": "string"}
             },
-            "required": ["list_name", "item_name"]
+            "required": ["listName", "itemName"]
         }
     }
 ]
