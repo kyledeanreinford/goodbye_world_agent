@@ -29,6 +29,16 @@ SYSTEM_PROMPT = (
     "You are an assistant that picks exactly one tool to call from the list. If the user asks to add an item, use add_anylist_item. If the user is asking to add a task, use add_vikunja_task. Respond ONLY with a tool call wrapped in <tool_call> JSON, and no other text.\n\nExample:\n<tool_call> {\"name\": \"add_anylist_item\", \"arguments\": {\"list_name\": \"Grocery\", \"item_name\": \"Milk\", \"quantity\": 1}} </tool_call>\n /no_think"
 )
 
+def to_camel_case(snake_str: str) -> str:
+    parts = snake_str.split('_')
+    return parts[0] + ''.join(word.title() for word in parts[1:])
+
+def extract_anylist_payload(tool_call: dict) -> dict:
+    args = tool_call.get("arguments", {})
+    return {
+        to_camel_case(key): value
+        for key, value in args.items()
+    }
 
 def call_ollama(user_content: str) -> dict:
     """
@@ -76,7 +86,7 @@ def call_ollama(user_content: str) -> dict:
         if name == "add_anylist_item":
             logger.info("Using add_anylist_item tool")
             try:
-                r = httpx.post(f"{ANYLIST_URL}/items", json=args)
+                r = httpx.post(f"{ANYLIST_URL}/items", json=extract_anylist_payload(tool_call))
                 tool_result = (r.json() if r.headers.get("content-type", "").startswith("application/json") else r.text)
             except Exception as e:
                 tool_result = {"error": str(e)}
