@@ -70,6 +70,7 @@ def call_ollama(user_content: str) -> dict:
 
         name = tool_call.get("name")
         args = tool_call.get("arguments", {})
+        print("Args: ", args)
         tool_result = None
 
         if name == "add_anylist_item":
