@@ -1,6 +1,9 @@
+@envFile = .env
+
 ### Transcribe
 POST http://localhost:8000/audio
 Content-Type: multipart/form-data; boundary=BOUNDARY
+Authorization: Bearer {{API_TOKEN}}
 
 --BOUNDARY
 Content-Disposition: form-data; name="file"; filename="task.wav"
@@ -12,6 +15,7 @@ Content-Type: audio/wav
 ### Text
 POST http://localhost:8000/
 Content-Type: application/json
+Authorization: Bearer {{API_TOKEN}}
 
 {
   "prompt": "Add ice cream to my Grocery list"
