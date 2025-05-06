@@ -2,8 +2,10 @@ import logging
 import os
 import re
 import json
+from functools import wraps
+
 import httpx
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort
 from httpx import Timeout
 
 from goodbye_world.tools import TOOLS
@@ -16,15 +18,37 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Environment URLs and model
+API_TOKEN     = os.getenv("API_TOKEN")
 WHISPER_URL  = os.getenv("WHISPER_URL", "http://localhost:9000/asr")
 ANYLIST_URL  = os.getenv("ANYLIST_URL", "http://localhost:3000")
 OLLAMA_URL   = os.getenv("OLLAMA_URL",  "http://localhost:11434/api/chat")
 OLLAMA_MODEL = os.getenv("OLLAMA_MODEL","qwen3")
 
+if not API_TOKEN:
+    logger.error("API_TOKEN environment variable is not set")
+    raise RuntimeError("API_TOKEN environment variable is required")
+
 app = Flask(__name__)
 
-# --- Fixed system prompt including tool descriptions ---
+def require_token(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        # Bearer token?
+        auth = request.headers.get("Authorization", "")
+        token = None
+        if auth.startswith("Bearer "):
+            token = auth.split(None, 1)[1].strip()
+
+        # Or X-API-KEY header
+        if not token:
+            token = request.headers.get("X-API-KEY", "").strip()
+
+        if token != API_TOKEN:
+            logger.warning("Unauthorized request from %s", request.remote_addr)
+            abort(401, description="Invalid or missing API token")
+        return func(*args, **kwargs)
+    return wrapper
+
 SYSTEM_PROMPT = (
     "You are an assistant that picks exactly one tool to call from the list. If the user asks to add an item, use add_anylist_item. If the user is asking to add a task, use add_vikunja_task. Respond ONLY with a tool call wrapped in <tool_call> JSON, and no other text.\n\nExample:\n<tool_call> {\"name\": \"add_anylist_item\", \"arguments\": {\"list_name\": \"Grocery\", \"item_name\": \"Milk\", \"quantity\": 1}} </tool_call>\n /no_think"
 )
@@ -111,6 +135,7 @@ def call_ollama(user_content: str) -> dict:
 
 
 @app.route("/", methods=["POST"])
+@require_token
 def text_endpoint():
     """
     Text‑input endpoint.
@@ -134,6 +159,7 @@ def text_endpoint():
 
 
 @app.route("/audio", methods=["POST"])
+@require_token
 def audio_endpoint():
     """
     Audio‑upload endpoint.
