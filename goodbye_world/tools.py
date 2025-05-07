@@ -5,12 +5,22 @@ TOOLS = [
         "parameters": {
             "type": "object",
             "properties": {
-                "project_id":  {"type": "integer"},
-                "title":       {"type": "string"},
+                "project_id": {"type": "integer"},
+                "title": {"type": "string"},
                 "description": {"type": "string"},
-                "labels":      {"type": "array",  "items": {"type": "string"}},
-                "due_date":    {"type": "string", "format": "date-time"},
-                "priority":    {"type": "integer"}
+                "labels": {
+                    "type": "array",
+                    "items": {"type": "string"}
+                },
+                "due_date": {
+                    "type": "string",
+                    "format": "date"
+                },
+                "due_time": {
+                    "type": "string",
+                    "pattern": "^(?:[01]\\d|2[0-3]):[0-5]\\d$"
+                },
+                "priority": {"type": "integer"}
             },
             "required": ["project_id", "title"]
         }
@@ -29,8 +39,8 @@ TOOLS = [
                     "enum": ["Whole Foods", "Grocery", "Kroger", "Publix", "Trader Joe's", "Target", "Costco"]
                 },
                 "itemName": {"type": "string"},
-                "quantity":  {"type": "integer"},
-                "unit":      {"type": "string"}
+                "quantity": {"type": "integer"},
+                "unit": {"type": "string"}
             },
             "required": ["listName", "itemName"]
         }

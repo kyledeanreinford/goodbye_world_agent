@@ -14,31 +14,6 @@ VIKUNJA_TOKEN = os.getenv("VIKUNJA_TOKEN")
 VIKUNJA_TIMEOUT = Timeout(None)
 
 
-def normalize_due_date(value):
-    if not value:
-        return None
-
-    now = datetime.now(timezone.utc)
-    parsed = dateparser.parse(
-        value,
-        settings={
-            "RETURN_AS_TIMEZONE_AWARE": True,
-            "RELATIVE_BASE": now,
-            "PREFER_DATES_FROM": "future"
-        }
-    )
-
-    if not parsed:
-        return None
-
-    # If user said "tomorrow" with no time, assume end-of-day
-    if parsed.time() == time(0, 0):
-        parsed = parsed.replace(hour=23, minute=59, second=59)
-
-    parsed_utc = parsed.astimezone(timezone.utc)
-    return parsed_utc.isoformat().replace("+00:00", "Z")
-
-
 def create_vikunja_task(task):
     """
     Create a task in Vikunja.
@@ -61,15 +36,25 @@ def create_vikunja_task(task):
 
     url = f"{VIKUNJA_URL}/projects/1/tasks"
     payload = {
-        "title": task["title"],
+        "title": task["task_name"],
         "description": task.get("description", "")
     }
 
-    if "due_date" in task:
-        normalized_date = normalize_due_date(task["due_date"])
-        if normalized_date:
-            payload["due_date"] = normalized_date
+    date_raw = task.get("due_date")
+    time_raw = task.get("due_time")
 
+    if date_raw:
+        if not time_raw:
+            time_raw = "23:59"
+
+        if len(time_raw.split(":")) == 2:
+            time_raw = f"{time_raw}:00"
+
+        dt_local = datetime.fromisoformat(f"{date_raw}T{time_raw}")
+
+        dt_utc = dt_local.astimezone(timezone.utc)
+
+        payload["due_date"] = dt_utc.isoformat().replace("+00:00", "Z")
     if "labels" in task:
         payload["labels"] = task["labels"]
     if "priority" in task:
