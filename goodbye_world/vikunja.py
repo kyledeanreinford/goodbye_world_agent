@@ -14,14 +14,19 @@ VIKUNJA_TOKEN = os.getenv("VIKUNJA_TOKEN")
 VIKUNJA_TIMEOUT = Timeout(None)
 
 
+import dateparser
+from datetime import datetime, time, timezone
+
 def normalize_due_date(value):
     if not value:
         return None
 
+    now = datetime.now(timezone.utc)
     parsed = dateparser.parse(
         value,
         settings={
             "RETURN_AS_TIMEZONE_AWARE": True,
+            "RELATIVE_BASE": now,
             "PREFER_DATES_FROM": "future"
         }
     )
@@ -29,11 +34,10 @@ def normalize_due_date(value):
     if not parsed:
         return None
 
-    # If no time specified (i.e., exactly midnight), assume end of day (23:59:59)
+    # If user said "tomorrow" with no time, assume end-of-day
     if parsed.time() == time(0, 0):
         parsed = parsed.replace(hour=23, minute=59, second=59)
 
-    # Normalize to UTC and format as RFC3339
     parsed_utc = parsed.astimezone(timezone.utc)
     return parsed_utc.isoformat().replace("+00:00", "Z")
 
