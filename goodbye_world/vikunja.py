@@ -58,14 +58,16 @@ def create_vikunja_task(task):
         "Accept": "application/json",
     }
 
+    title = task.get("title") or task.get("task_name")
+    if not title:
+        logger.error("Missing title/task_name in args: %s", task)
+        raise KeyError("title")
+
     url = f"{VIKUNJA_URL}/projects/1/tasks"
     payload = {
-        "title": task["task_name"],
+        "title": title,
         "description": task.get("description", "")
     }
-
-    date_raw = task.get("due_date")  # might be ISO or natural
-    time_raw = task.get("due_time")  # e.g. "17:00"
 
     if "due_date" in task:
         normalized = normalize_due_date(task["due_date"])
@@ -78,9 +80,9 @@ def create_vikunja_task(task):
 
     logger.info(
         "Creating Vikunja task - project_id: %s, title: %s",
-        0, task["title"]
+        0, title
     )
-    logger.debug("POST %s\nHeaders: %s\nPayload: %s", url, headers, payload)
+    logger.info("Final payload: %s", payload)
 
     with httpx.Client(timeout=VIKUNJA_TIMEOUT) as client:
         resp = client.put(url, headers=headers, json=payload)
