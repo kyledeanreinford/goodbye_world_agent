@@ -71,7 +71,9 @@ def create_vikunja_task(task):
     time_raw = task.get("due_time")
 
     if date_raw:
-        combined = date_raw + (f" {time_raw}" if time_raw else "")
+        if not time_raw:
+            time_raw = "23:59"
+        combined = f"{date_raw} {time_raw}"
         logger.debug("Normalizing combined due string: %r", combined)
         normalized = normalize_due_date(combined)
         if normalized:
