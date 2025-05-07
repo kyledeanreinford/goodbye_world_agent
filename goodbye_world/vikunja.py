@@ -102,17 +102,14 @@ def create_vikunja_task(task):
     task_id = created["id"]
     logger.info("Created task number %s", task_id)
 
-    # pull out either key
-    raw = task.get("labels") or task.get("label")
+    json_labels = task.get("labels") or task.get("label")
 
-    if raw is None:
+    if json_labels is None:
         labels_list = []
-    elif isinstance(raw, list):
-        labels_list = raw
-    elif isinstance(raw, str):
-        labels_list = [raw]
+    elif isinstance(json_labels, str):
+        labels_list = [json_labels]
     else:
-        labels_list = [raw]
+        labels_list = [json_labels]
 
     for label_id in labels_list:
         logger.debug("Attaching label: %s to task %s", label_id, task_id)
