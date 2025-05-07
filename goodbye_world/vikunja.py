@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 VIKUNJA_URL = os.getenv("VIKUNJA_URL", "http://vikunja.thereinfords.com/api/v1")
 VIKUNJA_TOKEN = os.getenv("VIKUNJA_TOKEN")
-VIKUNJA_TIMEOUT = Timeout(None)
+VIKUNJA_TIMEOUT = Timeout(30.0, connect=10.0)
 
 
 def normalize_due_date(value: str) -> str | None:
@@ -69,8 +69,6 @@ def create_vikunja_task(task):
         normalized = normalize_due_date(combined)
         if normalized:
             payload["due_date"] = normalized
-    if "labels" in task:
-        payload["labels"] = task["labels"]
     if "priority" in task:
         payload["priority"] = task["priority"]
 
@@ -94,4 +92,26 @@ def create_vikunja_task(task):
         raise
 
     logger.debug("Vikunja response body: %s", resp.text)
-    return resp.json()
+
+
+    with httpx.Client(timeout=VIKUNJA_TIMEOUT) as client:
+        resp = client.put(url, headers=headers, json=payload)
+        resp.raise_for_status()
+        created = resp.json()
+
+    task_id = created["id"]
+    logger.info("Created task %s, now attaching labels…", task_id)
+
+    # 2) Attach labels, if any
+    for label_id in task.get("labels", []):
+        label_url = f"{VIKUNJA_URL}/tasks/{task_id}/labels"
+        label_body = {"label_id": label_id}
+        r = client.post(label_url, headers=headers, json=label_body)
+        try:
+            r.raise_for_status()
+            logger.debug("  • Added label %s to task %s", label_id, task_id)
+        except httpx.HTTPStatusError:
+            logger.warning("  ⚠️ Failed adding label %s: %s %s",
+                           label_id, r.status_code, r.text)
+
+    return created
