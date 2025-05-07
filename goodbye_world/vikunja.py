@@ -20,8 +20,9 @@ def normalize_due_date(value: str) -> str | None:
 
     settings = {
         "RETURN_AS_TIMEZONE_AWARE": True,
-        "RELATIVE_BASE": datetime.now(timezone.utc),
-        "PREFER_DATES_FROM": "future",
+        "TIMEZONE": "America/Chicago",
+        "TO_TIMEZONE": "UTC",
+        "PREFER_DATES_FROM": "future"
     }
 
     dt = dateparser.parse(value, settings=settings)
