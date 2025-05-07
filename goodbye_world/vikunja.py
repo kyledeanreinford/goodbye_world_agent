@@ -1,5 +1,7 @@
 import os
 import logging
+from datetime import time, timezone
+
 import httpx
 from httpx import Timeout
 import dateparser
@@ -15,10 +17,25 @@ VIKUNJA_TIMEOUT = Timeout(None)
 def normalize_due_date(value):
     if not value:
         return None
-    parsed = dateparser.parse(value)
+
+    parsed = dateparser.parse(
+        value,
+        settings={
+            "RETURN_AS_TIMEZONE_AWARE": True,
+            "PREFER_DATES_FROM": "future"
+        }
+    )
+
     if not parsed:
         return None
-    return parsed.strftime("%Y-%m-%d")
+
+    # If no time specified (i.e., exactly midnight), assume end of day (23:59:59)
+    if parsed.time() == time(0, 0):
+        parsed = parsed.replace(hour=23, minute=59, second=59)
+
+    # Normalize to UTC and format as RFC3339
+    parsed_utc = parsed.astimezone(timezone.utc)
+    return parsed_utc.isoformat().replace("+00:00", "Z")
 
 
 def create_vikunja_task(task):
