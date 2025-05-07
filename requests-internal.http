@@ -1,7 +1,7 @@
 @envFile = .env
 
 ### Transcribe
-POST http://localhost:8000/audio
+POST {{GWA_URL}}/audio
 Content-Type: multipart/form-data; boundary=BOUNDARY
 Authorization: Bearer {{API_TOKEN}}
 
@@ -13,10 +13,10 @@ Content-Type: audio/wav
 --BOUNDARY--
 
 ### Text
-POST http://localhost:8000/
+POST {{GWA_URL}}
 Content-Type: application/json
 Authorization: Bearer {{API_TOKEN}}
 
 {
-  "prompt": "Add ice cream to my Grocery list"
+  "prompt": "Add a task to take out compost tomorrow"
 }

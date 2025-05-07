@@ -2,6 +2,7 @@ import os
 import logging
 import httpx
 from httpx import Timeout
+import dateparser
 
 # Configure logger for this module
 logger = logging.getLogger(__name__)
@@ -9,6 +10,16 @@ logger = logging.getLogger(__name__)
 VIKUNJA_URL = os.getenv("VIKUNJA_URL", "http://vikunja.thereinfords.com/api/v1")
 VIKUNJA_TOKEN = os.getenv("VIKUNJA_TOKEN")
 VIKUNJA_TIMEOUT = Timeout(None)
+
+
+def normalize_due_date(value):
+    if not value:
+        return None
+    parsed = dateparser.parse(value)
+    if not parsed:
+        return None
+    return parsed.strftime("%Y-%m-%d")
+
 
 def create_vikunja_task(task):
     """
@@ -35,8 +46,12 @@ def create_vikunja_task(task):
         "title": task["task_name"],
         "description": task.get("description", "")
     }
+
     if "due_date" in task:
-        payload["due_date"] = task["due_date"]
+        normalized_date = normalize_due_date(task["due_date"])
+        if normalized_date:
+            payload["due_date"] = normalized_date
+
     if "labels" in task:
         payload["labels"] = task["labels"]
     if "priority" in task:

@@ -20,7 +20,7 @@ Content-Type: application/json
   "messages": [
     {
       "role": "system",
-      "content": "Given the input, respond ONLY with a tool call in the form. Only add a label if I specify. Due date is optional: \n<tool_call> {\"name\": \"create_task\", \"arguments\": {\"title\": \"Buy milk\", \"label\": \"next\", \"\"due_date\": \"2025-05-01T12:00:00Z\"}} </tool_call>\n  }\n} /no_think"
+      "content": "{{SYSTEM_PROMPT}}"
     },
     {
       "role": "user",
