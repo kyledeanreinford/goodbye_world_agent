@@ -1,6 +1,6 @@
 import os
 import logging
-from datetime import time, timezone
+from datetime import time, timezone, datetime
 
 import httpx
 from httpx import Timeout
@@ -13,9 +13,6 @@ VIKUNJA_URL = os.getenv("VIKUNJA_URL", "http://vikunja.thereinfords.com/api/v1")
 VIKUNJA_TOKEN = os.getenv("VIKUNJA_TOKEN")
 VIKUNJA_TIMEOUT = Timeout(None)
 
-
-import dateparser
-from datetime import datetime, time, timezone
 
 def normalize_due_date(value):
     if not value:
@@ -46,7 +43,7 @@ def create_vikunja_task(task):
     """
     Create a task in Vikunja.
     Expected task keys:
-      - task_name (str)
+      - title (str)
       - description (optional str)
       - due_date (optional ISO 8601 str)
       - labels (optional list of label IDs)
@@ -64,7 +61,7 @@ def create_vikunja_task(task):
 
     url = f"{VIKUNJA_URL}/projects/1/tasks"
     payload = {
-        "title": task["task_name"],
+        "title": task["title"],
         "description": task.get("description", "")
     }
 
@@ -80,7 +77,7 @@ def create_vikunja_task(task):
 
     logger.info(
         "Creating Vikunja task - project_id: %s, title: %s",
-        0, task["task_name"]
+        0, task["title"]
     )
     logger.debug("POST %s\nHeaders: %s\nPayload: %s", url, headers, payload)
 
