@@ -38,7 +38,8 @@ TOOLS = [
                 "project_id",
                 "title",
                 "due_date",
-                "due_time"
+                "due_time",
+                "labels"
             ]
         }
     },

@@ -37,15 +37,6 @@ def normalize_due_date(value: str) -> str | None:
 
 
 def create_vikunja_task(task):
-    """
-    Create a task in Vikunja.
-    Expected task keys:
-      - title (str)
-      - description (optional str)
-      - due_date (optional ISO 8601 str)
-      - labels (optional list of label IDs)
-      - priority (optional int)
-    """
     if not VIKUNJA_TOKEN:
         logger.error("VIKUNJA_TOKEN is not set")
         raise ValueError("Missing VIKUNJA_TOKEN environment variable")
