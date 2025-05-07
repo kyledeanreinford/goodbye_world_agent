@@ -28,9 +28,6 @@ def normalize_due_date(value: str) -> str | None:
     if not dt:
         return None
 
-    if not dt:
-        return None
-
     if dt.hour == 0 and dt.minute == 0 and " at " not in value.lower():
         dt = dt.replace(hour=23, minute=59, second=0)
 
@@ -69,8 +66,13 @@ def create_vikunja_task(task):
         "description": task.get("description", "")
     }
 
-    if "due_date" in task:
-        normalized = normalize_due_date(task["due_date"])
+    date_raw = task.get("due_date")
+    time_raw = task.get("due_time")
+
+    if date_raw:
+        combined = date_raw + (f" {time_raw}" if time_raw else "")
+        logger.debug("Normalizing combined due string: %r", combined)
+        normalized = normalize_due_date(combined)
         if normalized:
             payload["due_date"] = normalized
     if "labels" in task:
