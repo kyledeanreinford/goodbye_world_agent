@@ -24,7 +24,7 @@ Content-Type: application/json
     },
     {
       "role": "user",
-      "content": "Add a task to take out the compost with label home tasks"
+      "content": "Add a task to take out the compost"
     }
   ],
   "stream": false

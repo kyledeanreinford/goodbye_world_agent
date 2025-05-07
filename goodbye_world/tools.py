@@ -14,10 +14,6 @@ TOOLS = [
                 "description": {
                     "type": "string"
                 },
-                "labels": {
-                    "type": "array",
-                    "items": {"type": "string"}
-                },
                 "due_date": {
                     "type": ["string", "null"],
                     "format": "date",
@@ -38,8 +34,7 @@ TOOLS = [
                 "project_id",
                 "title",
                 "due_date",
-                "due_time",
-                "labels"
+                "due_time"
             ]
         }
     },
