@@ -102,8 +102,9 @@ def create_vikunja_task(task):
     task_id = created["id"]
     logger.info("Created task number %s", task_id)
 
-    # 2) Attach labels, if any
-    for label_id in task.get("labels", []):
+    labels = task.get("labels") or task.get("label")
+
+    for label_id in task.get(labels, []):
         logger.debug("Attaching label: %s to task %s", label_id, task_id)
         label_url = f"{VIKUNJA_URL}/tasks/{task_id}/labels"
         label_body = {"label_id": label_id}
