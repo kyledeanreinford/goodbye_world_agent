@@ -104,9 +104,10 @@ def create_vikunja_task(task):
 
     # 2) Attach labels, if any
     for label_id in task.get("labels", []):
+        logger.debug("Attaching label: %s to task %s", label_id, task_id)
         label_url = f"{VIKUNJA_URL}/tasks/{task_id}/labels"
         label_body = {"label_id": label_id}
-        r = client.post(label_url, headers=headers, json=label_body)
+        r = client.put(label_url, headers=headers, json=label_body)
         try:
             r.raise_for_status()
             logger.debug("  • Added label %s to task %s", label_id, task_id)
