@@ -100,7 +100,7 @@ def create_vikunja_task(task):
         created = resp.json()
 
     task_id = created["id"]
-    logger.info("Created task %s, now attaching labels…", task_id)
+    logger.info("Created task number %s", task_id)
 
     # 2) Attach labels, if any
     for label_id in task.get("labels", []):
