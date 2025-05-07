@@ -1,10 +1,10 @@
-import os
 import logging
-from datetime import time, timezone, datetime
+import os
+from datetime import timezone, datetime
 
+import dateparser
 import httpx
 from httpx import Timeout
-import dateparser
 
 # Configure logger for this module
 logger = logging.getLogger(__name__)
@@ -12,6 +12,30 @@ logger = logging.getLogger(__name__)
 VIKUNJA_URL = os.getenv("VIKUNJA_URL", "http://vikunja.thereinfords.com/api/v1")
 VIKUNJA_TOKEN = os.getenv("VIKUNJA_TOKEN")
 VIKUNJA_TIMEOUT = Timeout(None)
+
+
+def normalize_due_date(value: str) -> str | None:
+    if not value:
+        return None
+
+    settings = {
+        "RETURN_AS_TIMEZONE_AWARE": True,
+        "RELATIVE_BASE": datetime.now(timezone.utc),
+        "PREFER_DATES_FROM": "future",
+    }
+
+    dt = dateparser.parse(value, settings=settings)
+    if not dt:
+        return None
+
+    if not dt:
+        return None
+
+    if dt.hour == 0 and dt.minute == 0 and " at " not in value.lower():
+        dt = dt.replace(hour=23, minute=59, second=0)
+
+    dt_utc = dt.astimezone(timezone.utc)
+    return dt_utc.strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def create_vikunja_task(task):
@@ -40,21 +64,13 @@ def create_vikunja_task(task):
         "description": task.get("description", "")
     }
 
-    date_raw = task.get("due_date")
-    time_raw = task.get("due_time")
+    date_raw = task.get("due_date")  # might be ISO or natural
+    time_raw = task.get("due_time")  # e.g. "17:00"
 
-    if date_raw:
-        if not time_raw:
-            time_raw = "23:59"
-
-        if len(time_raw.split(":")) == 2:
-            time_raw = f"{time_raw}:00"
-
-        dt_local = datetime.fromisoformat(f"{date_raw}T{time_raw}")
-
-        dt_utc = dt_local.astimezone(timezone.utc)
-
-        payload["due_date"] = dt_utc.isoformat().replace("+00:00", "Z")
+    if "due_date" in task:
+        normalized = normalize_due_date(task["due_date"])
+        if normalized:
+            payload["due_date"] = normalized
     if "labels" in task:
         payload["labels"] = task["labels"]
     if "priority" in task:
