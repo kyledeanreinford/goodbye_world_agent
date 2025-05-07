@@ -102,9 +102,19 @@ def create_vikunja_task(task):
     task_id = created["id"]
     logger.info("Created task number %s", task_id)
 
-    labels = task.get("labels") or task.get("label")
+    # pull out either key
+    raw = task.get("labels") or task.get("label")
 
-    for label_id in task.get(labels, []):
+    if raw is None:
+        labels_list = []
+    elif isinstance(raw, list):
+        labels_list = raw
+    elif isinstance(raw, str):
+        labels_list = [raw]
+    else:
+        labels_list = [raw]
+
+    for label_id in labels_list:
         logger.debug("Attaching label: %s to task %s", label_id, task_id)
         label_url = f"{VIKUNJA_URL}/tasks/{task_id}/labels"
         label_body = {"label_id": label_id}
