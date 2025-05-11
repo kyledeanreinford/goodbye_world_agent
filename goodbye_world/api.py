@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import json
+from datetime import datetime
 from functools import wraps
 
 import httpx
@@ -28,10 +29,14 @@ if not API_TOKEN:
     logger.error("API_TOKEN environment variable is not set")
     raise RuntimeError("API_TOKEN environment variable is required")
 
+now = datetime.now().strftime("%Y-%m-%d")
 app = Flask(__name__)
 
 with open("goodbye_world/system_prompt.txt", "r") as f:
-    system_prompt = f.read()
+    template = f.read()
+
+system_prompt = template.format(now=now)
+
 
 def require_token(func):
     @wraps(func)
